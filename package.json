@@ -5,7 +5,9 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "push": "git add . && git commit -m '🚀 Deploy' && git push origin master",
+    "deploy": "yarn build && mv dist/ docs/ && yarn push"
   },
   "dependencies": {
     "@fortawesome/fontawesome": "^1.1.8",
