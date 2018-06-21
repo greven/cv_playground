@@ -64,7 +64,7 @@ export default {
   },
 
   mounted() {
-    this.drawImage('../image.jpg')
+    this.drawImage('image.jpg')
   },
 
   methods: {
