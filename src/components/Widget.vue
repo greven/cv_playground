@@ -46,9 +46,20 @@ export default {
   margin: 1rem 1rem 1rem 1rem;
 }
 
+@media screen and (max-device-width: 800px) {
+  .items { 
+    grid-template: auto / repeat(2, 1fr);
+  }
+}
+
+@media only screen and (max-device-width: 600px) {
+  .items { 
+    grid-template: auto / 1fr;
+  }
+}
+
 .insert {
   /* height: 100%; */
-  /* height: calc(100vh); */
   display: flex;
   justify-content: center;
   align-items: center;
