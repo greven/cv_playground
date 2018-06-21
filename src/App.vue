@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <Header />
-    <Widget :initialItems="2" />
+    <Widget :initialItems="1" />
   </div>
 </template>
 
