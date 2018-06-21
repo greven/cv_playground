@@ -1,5 +1,7 @@
 # CV Playground
-⚽️ A simple VueJS playground app to play around with computer vision filters.
+A simple VueJS playground app to play around with computer vision filters.
+
+Demo: [here](http://greven.github.io/cv_playground/).
 
 ## Setup
 
