@@ -2,9 +2,7 @@
   <div class="widget">
     <div class="items">
       <Item v-for="n in items" 
-        :key="n" 
-        :filters="filters" 
-        :methods="methods" />
+        :key="n" />
       <div class="item insert" v-on:click="items += 1">
         <font-awesome-icon :icon="['fal', 'plus-circle']" />
       </div>
@@ -30,9 +28,7 @@ export default {
 
   data() {
     return {
-      items: this.initialItems,
-      filters: ['Black & White', 'Sobel'],
-      methods: ['Main Thread', 'Web Worker', 'WebGL']
+      items: this.initialItems
     }
   }
 }
@@ -63,7 +59,6 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 8rem;
   color: rgb(224, 224, 224);
   background: transparent;
   border: none;
@@ -72,9 +67,9 @@ export default {
 }
 
 .insert > svg {
-  width: 50%;
-  height: 50%;
-  filter: drop-shadow(8px 8px 8px rgba(0, 0, 0, 0.8));  
+  width: 35%;
+  height: 35%;
+  filter: drop-shadow(8px 8px 8px rgba(0, 0, 0, 0.5));  
 }
 
 </style>

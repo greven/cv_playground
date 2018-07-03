@@ -9,30 +9,36 @@
     </div>
 
     <div class="options">
-      <input type="file" name="file" id="file" ref="upload" accept=".jpg, .jpeg, .png" v-on:change="updateImage">
+      <input type="file" name="file" id="file" ref="upload" accept=".jpg, .jpeg, .png" v-on:change="uploadImage">
       <div class="selects">
         <select name="filter" id="filter" v-model="filter">
-          <option v-for="item in filters" :key="item">
+          <option v-for="item in Array.from(filters.keys())" :key="item">
             {{ item }}
           </option>
         </select>
-
+        
         <select name="method" id="method" v-model="method">
           <option v-for="item in methods" :key="item">
             {{ item }}
             </option>
         </select>
       </div>
-
-      <input type="range" name="threshold" id="threshold" min="0" max="255" v-model="threshold">
+      <button class="settings"><font-awesome-icon :icon="['fas', 'cog']" /></button>
     </div>
 
   </div>
 </template>
 
 <script>
-import { eventHub } from '../eventHub.js'
+import { eventHub } from '../eventHub'
+import { Filter } from '../lib/cv'
+import { createWorker } from '../lib/util'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
+
+const filtersMap = new Map([
+  ['Black & White', new Filter().grayscale],
+  ['Sobel', new Filter().grayscale]
+])
 
 export default {
   name: 'Item',
@@ -41,21 +47,17 @@ export default {
     FontAwesomeIcon
   },
 
-  props: {
-    filters: {
-      type: Array
-    },
-
-    methods: {
-      type: Array
-    }
-  },
-
   data() {
     return {
       filter: 'Black & White',
-      method: 'Main Thread',
-      threshold: 127
+      method: 'Web Worker',
+      image: {
+        src: 'image.jpg',
+        width: null,
+        height: null
+      },
+      filters: filtersMap,
+      methods: ['Main Thread', 'Web Worker', 'WebGL']
     }
   },
 
@@ -64,40 +66,103 @@ export default {
   },
 
   mounted() {
-    this.drawImage('image.jpg')
+    this.drawImage(this.image.src)
   },
 
   methods: {
-    updateImage(event) {
+    drawImage(file) {
+      const image = new Image()
+      image.src = file
+      
+      image.onload = () => {     
+        this.image.width = image.width
+        this.image.height = image.height
+        const ctx = this.setCanvas(image)
+        ctx.drawImage(image, 0, 0, image.width, image.height)
+      }
+    },
+
+    uploadImage(event) {
       const files = event.target.files
       if(files && files[0]) {
         const reader = new FileReader()
-        reader.onload = (event) => {     
-          this.drawImage(event.target.result)  
+        reader.onload = (event) => {
+          this.image.src = event.target.result    
+          this.drawImage(this.image.src)  
         }
         reader.readAsDataURL(files[0])
       }
     },
 
-    drawImage(source) {
+    setCanvas(image) {
       const canvas = this.$refs.canvas
       const ctx = canvas.getContext('2d')
-      const img = new Image()
-      img.src = source
+      canvas.width = image.width
+      canvas.height = image.height
+      return ctx
+    },
 
-      // Image onload Event
-      img.onload = () => {     
-        const width = img.width
-        const height = img.height
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-      }
+    getPixels(canvas) {
+      const ctx = canvas.getContext('2d')
+      return ctx.getImageData(0, 0, this.image.width, this.image.height)
     },
 
     execute(isRunning) {
       if(isRunning) {
-        // TODO: Call Processing Code here
+        this.processImage(this.filter, this.method)
+      }
+    },
+
+    processImage(filter, method) {
+      switch (method) {
+        case 'Main Thread':
+          this.filterImage(this.filters.get(filter))
+          break;
+        case 'Web Worker':
+          this.startworker(this.filters.get(filter))
+          break;
+        case 'WebGL':
+          this.filterImage(this.filters.get(filter))
+          break;
+      }
+    },
+
+    filterImage(filter) {
+      const canvas = this.$refs.canvas
+      const ctx = canvas.getContext('2d')
+      const pixels = this.getPixels(canvas)
+      let filtered = filter(pixels, 'luma')
+
+      pixels.data.set(filtered, 0)
+      ctx.putImageData(pixels, 0, 0)
+      eventHub.$emit('running', false)
+    },
+
+    startworker(filter) {
+      const canvas = this.$refs.canvas
+      const ctx = canvas.getContext('2d')
+      const pixels = this.getPixels(canvas)
+
+      function workerFunction() {
+        self.onmessage = (event) => {
+          const pixels = event.data[0]
+          console.log(pixels)
+          // const filter = 
+          // const filtered = filter(pixels, 'luma')
+          // self.postMessage([filtered])
+        }
+      }
+
+      const worker = createWorker(workerFunction)
+      // worker.postMessage([pixels], [filter])
+      worker.postMessage([pixels.buffer])
+
+      worker.onmessage = function(event) {
+        // const filtered = event.data[0]
+        // console.log(filtered)
+        // pixels.data.set(filtered, 0)
+        // ctx.putImageData(pixels, 0, 0)
+        // eventHub.$emit('running', false)
       }
     }
   },
@@ -114,18 +179,15 @@ export default {
 
 .options {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 0.25rem;
 }
 
-.options input {
-  width: 98%;
-  margin: 0.25rem 0 0 0;
+button.settings {
+  margin-left: 0.25rem;
 }
 
 .selects {
-  width: 100%; 
+  /* width: 100%;  */
   display: flex;
   flex: 1;
 }
@@ -173,6 +235,6 @@ export default {
 }
 
 #file {
-  visibility: collapse;
+  display: none;
 }
 </style>

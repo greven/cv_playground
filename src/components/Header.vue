@@ -25,6 +25,10 @@ export default {
     }
   },
 
+  created() {
+    eventHub.$on('running', flag => { this.isRunning = flag })
+  },
+
   methods: {
     run() {
       this.isRunning = !this.isRunning

@@ -13,8 +13,9 @@ import faPlusCircle from '@fortawesome/fontawesome-pro-light/faPlusCircle'
 import faImage from '@fortawesome/fontawesome-pro-light/faImage'
 import faPlay from '@fortawesome/fontawesome-pro-solid/faPlay'
 import faPause from '@fortawesome/fontawesome-pro-solid/faPause'
+import faCog from '@fortawesome/fontawesome-pro-solid/faCog'
 
-fontawesome.library.add(faPlusCircle, faImage, faPlay, faPause)
+fontawesome.library.add(faPlusCircle, faImage, faPlay, faPause, faCog)
 
 export default {
   name: 'app',
