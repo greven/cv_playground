@@ -119,6 +119,7 @@ export default {
 
       pixels.data.set(filtered, 0)
       ctx.putImageData(pixels, 0, 0)
+      
       eventHub.$emit('running', false)
     }
   },
