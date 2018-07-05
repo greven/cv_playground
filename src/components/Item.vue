@@ -17,11 +17,11 @@
           </option>
         </select>
         
-        <select name="method" id="method" v-model="method">
+        <!-- <select name="method" id="method" v-model="method">
           <option v-for="item in methods" :key="item">
             {{ item }}
             </option>
-        </select>
+        </select> -->
       </div>
       <button class="settings"><font-awesome-icon :icon="['fas', 'cog']" /></button>
     </div>
@@ -32,12 +32,11 @@
 <script>
 import { eventHub } from '../eventHub'
 import { Filter } from '../lib/cv'
-import { createWorker } from '../lib/util'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
 
 const filtersMap = new Map([
   ['Black & White', new Filter().grayscale],
-  ['Sobel', new Filter().grayscale]
+  ['Sobel', new Filter().sobel]
 ])
 
 export default {
@@ -50,14 +49,13 @@ export default {
   data() {
     return {
       filter: 'Black & White',
-      method: 'Web Worker',
+      method: 'Main Thread',
       image: {
         src: 'image.jpg',
         width: null,
         height: null
       },
-      filters: filtersMap,
-      methods: ['Main Thread', 'Web Worker', 'WebGL']
+      filters: filtersMap
     }
   },
 
@@ -109,21 +107,7 @@ export default {
 
     execute(isRunning) {
       if(isRunning) {
-        this.processImage(this.filter, this.method)
-      }
-    },
-
-    processImage(filter, method) {
-      switch (method) {
-        case 'Main Thread':
-          this.filterImage(this.filters.get(filter))
-          break;
-        case 'Web Worker':
-          this.startworker(this.filters.get(filter))
-          break;
-        case 'WebGL':
-          this.filterImage(this.filters.get(filter))
-          break;
+        this.filterImage(this.filters.get(this.filter))        
       }
     },
 
@@ -136,34 +120,6 @@ export default {
       pixels.data.set(filtered, 0)
       ctx.putImageData(pixels, 0, 0)
       eventHub.$emit('running', false)
-    },
-
-    startworker(filter) {
-      const canvas = this.$refs.canvas
-      const ctx = canvas.getContext('2d')
-      const pixels = this.getPixels(canvas)
-
-      function workerFunction() {
-        self.onmessage = (event) => {
-          const pixels = event.data[0]
-          console.log(pixels)
-          // const filter = 
-          // const filtered = filter(pixels, 'luma')
-          // self.postMessage([filtered])
-        }
-      }
-
-      const worker = createWorker(workerFunction)
-      // worker.postMessage([pixels], [filter])
-      worker.postMessage([pixels.buffer])
-
-      worker.onmessage = function(event) {
-        // const filtered = event.data[0]
-        // console.log(filtered)
-        // pixels.data.set(filtered, 0)
-        // ctx.putImageData(pixels, 0, 0)
-        // eventHub.$emit('running', false)
-      }
     }
   },
 }
@@ -183,6 +139,7 @@ export default {
 }
 
 button.settings {
+  width: 50px;
   margin-left: 0.25rem;
 }
 
