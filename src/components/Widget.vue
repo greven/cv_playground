@@ -69,7 +69,7 @@ export default {
 .insert > svg {
   width: 35%;
   height: 35%;
-  filter: drop-shadow(8px 8px 8px rgba(0, 0, 0, 0.5));  
+  filter: drop-shadow(8px 8px 8px rgba(0, 0, 0, 0.1));  
 }
 
 </style>

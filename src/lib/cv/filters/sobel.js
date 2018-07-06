@@ -1,32 +1,48 @@
-export default function (pixels, method = 'mean') {
-  let data = pixels.data
+import { Filter } from '../../cv'
 
-  for(let i = 0; i < data.length; i+=4) {
-    const r = data[i]
-    const g = data[i+1]
-    const b = data[i+2]
-    
-    let v = 0
-    switch (method) {
-      case 'mean':
-        v = mean(r, g, b)
-        break;
-      case 'luminance':
-        v = luminance(r, g, b)
-        break;
-      case 'luma':
-        v = luma(r, g, b)
-        break;
+export default function (threshold) {
+  let data = new Filter(this.canvas).grayscale()
+
+  // Sobel filters
+  const filterX = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+  const filterY = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
+
+  for(let y = 1; y < this.height-1; y++) {
+    for(let x = 1; x < this.width-1; x++) {
+      const gradX = convolute(data, filterX, this.width, x, y)
+      const gradY = convolute(data, filterY, this.width, x, y)
+
+      const shift = offset(x, y, this.width)
+      var edgeVal = Math.sqrt(gradX * gradX + gradY * gradY)
+
+      if(edgeVal >= threshold) {
+        data[shift] = data[shift+1] = data[shift+2] = 255 
+      } else {
+        data[shift] = data[shift+1] = data[shift+2] = 0
+      }
     }
-    data[i] = data[i+1] = data[i+2] = v 
   }
-  return pixels
+  return data
 }
 
-// Methods
+// Calculate array position shift since imgData is a 1 dimension pixel array
+const offset = (x, y, width) => 4 * ((y * width) + x)
 
-const mean = (r,g,b) => (1/3) * (r + g + b)
+function pixelValue(data, width, x, y) {
+  return data[offset(x, y, width)]
+}
 
-const luminance = (r,g,b) => 0.3*r + 0.59*g + 0.11*b
+function convolute(data, filter, width, x, y) {
+  const sum = pixelValue(data, width, x-1, y-1) * filter[0][0] + 
+              pixelValue(data, width, x, y-1) * filter[0][1] +
+              pixelValue(data, width, x+1, y-1) * filter[0][2] +
 
-const luma = (r,g,b) => 0.2126*r + 0.7152*g + 0.0722*b
+              pixelValue(data, width, x-1, y) * filter[1][0] +
+              pixelValue(data, width, x, y) * filter[1][1] +
+              pixelValue(data, width, x+1, y) * filter[1][2] +
+
+              pixelValue(data, width, x-1, y+1) * filter[2][0] +
+              pixelValue(data, width, x, y+1) * filter[2][1] +
+              pixelValue(data, width, x+1, y+1) * filter[2][2]
+  return sum
+}

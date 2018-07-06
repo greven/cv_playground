@@ -11,7 +11,7 @@
     <div class="options">
       <input type="file" name="file" id="file" ref="upload" accept=".jpg, .jpeg, .png" v-on:change="uploadImage">
       <div class="selects">
-        <select name="filter" id="filter" v-model="filter">
+        <select name="filter" id="filter" v-model="selectedFilter">
           <option v-for="item in filters" :key="item">
             {{ item }}
           </option>
@@ -23,6 +23,7 @@
             </option>
         </select> -->
       </div>
+      <button class="reset" v-on:click="resetImage">Reset</button>
       <button class="settings"><font-awesome-icon :icon="['fas', 'cog']" /></button>
     </div>
 
@@ -34,11 +35,6 @@ import { eventHub } from '../eventHub'
 import { Filter } from '../lib/cv'
 import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
 
-const filtersMap = new Map([
-  ['Black & White', new Filter().grayscale],
-  ['Sobel', new Filter().sobel]
-])
-
 export default {
   name: 'Item',
 
@@ -48,14 +44,14 @@ export default {
 
   data() {
     return {
-      filter: 'Grayscale',
+      selectedFilter: 'Grayscale',
       method: 'Main Thread',
       image: {
         src: 'image.jpg',
         width: null,
         height: null
       },
-      filters: ['Grayscale', 'Sobel']
+      filters: ['Grayscale', 'Threshold', 'Sobel']
     }
   },
 
@@ -80,6 +76,10 @@ export default {
       }
     },
 
+    resetImage() {
+      this.drawImage(this.image.src)
+    },
+
     uploadImage(event) {
       const files = event.target.files
       if(files && files[0]) {
@@ -100,39 +100,38 @@ export default {
       return ctx
     },
 
-    getPixels(canvas) {
-      const ctx = canvas.getContext('2d')
-      return ctx.getImageData(0, 0, this.image.width, this.image.height)
-    },
-
     execute(isRunning) {
       if(isRunning) {
-        this.filterImage(this.filter)        
+        this.filterImage(this.selectedFilter)        
       }
     },
 
-    filterImage(filter) {
+    filterImage(selectedFilter) {
       const canvas = this.$refs.canvas
       const ctx = canvas.getContext('2d')
-      const pixels = this.getPixels(canvas)
+      const imgData = ctx.getImageData(0, 0, this.image.width, this.image.height)
 
       // get the filter
-      let filtered
-      switch (filter) {
+      let output
+      let filter = new Filter(canvas)
+      switch (selectedFilter) {
         case 'Grayscale':
-          filtered = new Filter().grayscale(pixels, 'luma')  
-          break;
+          output = filter.grayscale('luma')  
+          break
+        case 'Threshold':
+          output = filter.threshold(200)
+          break
         case 'Sobel':
-          filtered = new Filter().sobel(pixels)  
-          break;
+          output = filter.sobel(125)  
+          break
         default:
-          filtered = pixels
-          break;
+          output = imgData
+          break
       }
 
-      pixels.data.set(filtered, 0)
-      ctx.putImageData(pixels, 0, 0)
-      
+      imgData.data.set(output, 0)
+      ctx.putImageData(imgData, 0, 0)
+
       eventHub.$emit('running', false)
     }
   },
@@ -152,9 +151,12 @@ export default {
   padding: 0.25rem;
 }
 
+button {
+  margin-left: 0.25rem;
+}
+
 button.settings {
   width: 50px;
-  margin-left: 0.25rem;
 }
 
 .selects {

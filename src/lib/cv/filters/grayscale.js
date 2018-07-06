@@ -1,5 +1,5 @@
-export default function (pixels, method = 'mean') {
-  let data = pixels.data
+export default function (method = 'mean') {
+  let data = this.getImageData()
 
   for(let i = 0; i < data.length; i+=4) {
     const r = data[i]
@@ -20,7 +20,7 @@ export default function (pixels, method = 'mean') {
     }
     data[i] = data[i+1] = data[i+2] = v 
   }
-  return pixels
+  return data
 }
 
 // Methods
