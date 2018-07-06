@@ -12,7 +12,7 @@
       <input type="file" name="file" id="file" ref="upload" accept=".jpg, .jpeg, .png" v-on:change="uploadImage">
       <div class="selects">
         <select name="filter" id="filter" v-model="filter">
-          <option v-for="item in Array.from(filters.keys())" :key="item">
+          <option v-for="item in filters" :key="item">
             {{ item }}
           </option>
         </select>
@@ -48,14 +48,14 @@ export default {
 
   data() {
     return {
-      filter: 'Black & White',
+      filter: 'Grayscale',
       method: 'Main Thread',
       image: {
         src: 'image.jpg',
         width: null,
         height: null
       },
-      filters: filtersMap
+      filters: ['Grayscale', 'Sobel']
     }
   },
 
@@ -107,7 +107,7 @@ export default {
 
     execute(isRunning) {
       if(isRunning) {
-        this.filterImage(this.filters.get(this.filter))        
+        this.filterImage(this.filter)        
       }
     },
 
@@ -115,7 +115,20 @@ export default {
       const canvas = this.$refs.canvas
       const ctx = canvas.getContext('2d')
       const pixels = this.getPixels(canvas)
-      let filtered = filter(pixels, 'luma')
+
+      // get the filter
+      let filtered
+      switch (filter) {
+        case 'Grayscale':
+          filtered = new Filter().grayscale(pixels, 'luma')  
+          break;
+        case 'Sobel':
+          filtered = new Filter().sobel(pixels)  
+          break;
+        default:
+          filtered = pixels
+          break;
+      }
 
       pixels.data.set(filtered, 0)
       ctx.putImageData(pixels, 0, 0)
